@@ -325,8 +325,6 @@ export class Room {
                 if (this.currentPlayer?.socket == socket) this.reset();
                 this.broadcast();
                 break;
-            case 'quit':
-                this.quit(socket);
         }
     }
 
@@ -339,10 +337,12 @@ export class Room {
                     player.letters.push(this.getLetter());
                 }
             }
-            player.socket.send(JSON.stringify({
-                type: 'start',
-                data: player.letters
-            }))
+            if(!player.socket.isClosed) {
+                player.socket.send(JSON.stringify({
+                    type: 'start',
+                    data: player.letters
+                }))
+            }
         })
     }
 
@@ -354,8 +354,8 @@ export class Room {
         } else if (this.players.length > 0) {
             this.currentPlayer = this.players[0];
         }
-        this.broadcast();
-        this.currentPlayer!.socket.send(JSON.stringify({ type: 'turn', data: null }))
+        //this.broadcast();
+        //this.currentPlayer!.socket.send(JSON.stringify({ type: 'turn', data: null }))
     }
 
     broadcast() {
@@ -376,7 +376,7 @@ export class Room {
         }
         this.players.forEach(player => {
             msg.data.letters = player.letters;
-            player.socket.send(JSON.stringify(msg));
+            if(!player.socket.isClosed) player.socket.send(JSON.stringify(msg));
         })
     }
 
@@ -401,7 +401,7 @@ export class Room {
 
     caseClicked(data: { letterIndex: number, x: number, y: number }) {
         let { letterIndex, x, y } = data;
-        if(x > 0 && y > 0 && x < this.map.length && y < this.map.length && letterIndex > 0 && letterIndex < this.currentPlayer!.letters.length) {
+        if(x >= 0 && y >= 0 && x < this.map.length && y < this.map.length && letterIndex >= 0 && letterIndex < this.currentPlayer!.letters.length) {
             if (this.map[x][y].getLetter() == null && this.currentPlayer!.swapLeft == 7 && this.checkAdjacent(x, y)) {
                 this.casesPut.push({ c: this.map[x][y], x, y });
                 this.map[x][y].setLetter(this.currentPlayer!.letters[letterIndex]);
@@ -441,7 +441,9 @@ export class Room {
                 }
             }
             if(playersHaveLetters == false) {
-                this.players.forEach(player => player.socket.send(JSON.stringify({type: 'end', data: null})))
+                this.players.forEach(player => {
+                    if(!player.socket.isClosed) player.socket.send(JSON.stringify({type: 'end', data: null}))
+                })
             }
         }
         this.next();
@@ -531,7 +533,7 @@ export class Room {
     }
 
     swap(letterIndex: number) {
-        if(this.currentPlayer!.swapLeft > 0 && this.letters.length > 0 && letterIndex > 0 && letterIndex < this.currentPlayer!.letters.length){
+        if(this.currentPlayer!.swapLeft > 0 && this.letters.length > 0 && letterIndex >= 0 && letterIndex < this.currentPlayer!.letters.length){
             let letter = this.currentPlayer!.letters[letterIndex];
             this.currentPlayer!.letters = this.currentPlayer!.letters.filter(l => l != letter);
             this.letters.push(letter.getLetter());
@@ -545,14 +547,6 @@ export class Room {
         let letter = this.letters[rand];
         this.letters = [...this.letters.slice(0, rand), ...this.letters.slice(rand + 1)];
         return new Letter(letter);
-    }
-
-    quit(socket: WebSocket) {
-        let player = this.players.find(p => p.socket == socket);
-        if(player) {
-            player.letters.forEach(l => this.letters.push(l.getLetter()));
-            this.players = this.players.filter(p => p.socket != socket);
-        }
     }
 }
 

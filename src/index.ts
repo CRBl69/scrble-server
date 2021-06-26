@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.99.0/http/server.ts';
-import { acceptWebSocket, WebSocket } from 'https://deno.land/std@0.99.0/ws/mod.ts';
+import { acceptWebSocket, WebSocket, isWebSocketCloseEvent } from 'https://deno.land/std@0.99.0/ws/mod.ts';
 import { readAll } from 'https://deno.land/std@0.99.0/io/util.ts'
 import { Room } from './room.ts';
 
@@ -55,7 +55,15 @@ async function handleWs(socket: WebSocket) {
                     }
                 });
             } catch(e) {
-                console.log(`Could not convert string to WsMessage: ${e}`);
+                console.log(`${event} ${e}`);
+            }
+        } else if(isWebSocketCloseEvent(event)) {
+            for(let room of rooms) {
+                for(let player of room.players) {
+                    if(socket == player.socket && !room.started) {
+                        room.players = room.players.filter(p => p != player);
+                    }
+                }
             }
         }
     }
