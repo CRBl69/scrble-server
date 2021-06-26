@@ -325,11 +325,12 @@ export class Room {
                 if (this.currentPlayer?.socket == socket) this.reset();
                 this.broadcast();
                 break;
+            case 'quit':
+                this.quit(socket);
         }
     }
 
     start() {
-        console.dir('players: ' + this.players);
         this.started = true;
         this.next();
         this.players.forEach(player => {
@@ -391,19 +392,22 @@ export class Room {
             });
         } else if (player !== undefined && player.socket.isClosed) {
             player!.socket = socket;
-            if (this.currentPlayer == player) {
-                this.currentPlayer.socket.send(JSON.stringify({ type: 'turn', data: null }));
-            }
+            // To determine if needed
+            // if (this.currentPlayer == player) {
+            //     this.currentPlayer.socket.send(JSON.stringify({ type: 'turn', data: null }));
+            // }
         }
     }
 
     caseClicked(data: { letterIndex: number, x: number, y: number }) {
         let { letterIndex, x, y } = data;
-        if (this.map[x][y].getLetter() == null && this.currentPlayer?.swapLeft == 7 && this.checkAdjacent(x, y)) {
-            this.casesPut.push({ c: this.map[x][y], x, y });
-            this.map[x][y].setLetter(this.currentPlayer!.letters[letterIndex]);
-            let letter = this.currentPlayer.letters[letterIndex];
-            this.currentPlayer.letters = this.currentPlayer.letters.filter(v => v != letter);
+        if(x > 0 && y > 0 && x < this.map.length && y < this.map.length && letterIndex > 0 && letterIndex < this.currentPlayer!.letters.length) {
+            if (this.map[x][y].getLetter() == null && this.currentPlayer!.swapLeft == 7 && this.checkAdjacent(x, y)) {
+                this.casesPut.push({ c: this.map[x][y], x, y });
+                this.map[x][y].setLetter(this.currentPlayer!.letters[letterIndex]);
+                let letter = this.currentPlayer!.letters[letterIndex];
+                this.currentPlayer!.letters = this.currentPlayer!.letters.filter(v => v != letter);
+            }
         }
     }
 
@@ -527,7 +531,7 @@ export class Room {
     }
 
     swap(letterIndex: number) {
-        if(this.currentPlayer!.swapLeft > 0 && this.letters.length > 0){
+        if(this.currentPlayer!.swapLeft > 0 && this.letters.length > 0 && letterIndex > 0 && letterIndex < this.currentPlayer!.letters.length){
             let letter = this.currentPlayer!.letters[letterIndex];
             this.currentPlayer!.letters = this.currentPlayer!.letters.filter(l => l != letter);
             this.letters.push(letter.getLetter());
@@ -541,6 +545,14 @@ export class Room {
         let letter = this.letters[rand];
         this.letters = [...this.letters.slice(0, rand), ...this.letters.slice(rand + 1)];
         return new Letter(letter);
+    }
+
+    quit(socket: WebSocket) {
+        let player = this.players.find(p => p.socket == socket);
+        if(player) {
+            player.letters.forEach(l => this.letters.push(l.getLetter()));
+            this.players = this.players.filter(p => p.socket != socket);
+        }
     }
 }
 
