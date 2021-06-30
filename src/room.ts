@@ -354,8 +354,6 @@ export class Room {
         } else if (this.players.length > 0) {
             this.currentPlayer = this.players[0];
         }
-        //this.broadcast();
-        //this.currentPlayer!.socket.send(JSON.stringify({ type: 'turn', data: null }))
     }
 
     broadcast() {
@@ -392,10 +390,6 @@ export class Room {
             });
         } else if (player !== undefined && player.socket.isClosed) {
             player!.socket = socket;
-            // To determine if needed
-            // if (this.currentPlayer == player) {
-            //     this.currentPlayer.socket.send(JSON.stringify({ type: 'turn', data: null }));
-            // }
         }
     }
 
