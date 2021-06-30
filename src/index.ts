@@ -1,11 +1,14 @@
 import { serve } from 'https://deno.land/std@0.99.0/http/server.ts';
 import { acceptWebSocket, WebSocket, isWebSocketCloseEvent } from 'https://deno.land/std@0.99.0/ws/mod.ts';
+import { config } from 'https://deno.land/x/dotenv/mod.ts';
 import { Room } from './room.ts';
+
+const env = config();
 
 let rooms: Map<string, Room> = new Map();
 
-for await (const req of serve({port:6942})){
-    const h = new Headers({'Access-Control-Allow-Origin': 'http://bite.ddns.net'});
+for await (const req of serve({port:parseInt(env.PORT)})){
+    const h = new Headers({'Access-Control-Allow-Origin': env.APP_URL});
     switch(req.url) {
         case '/ws':
             const { conn, r: bufReader, w: bufWriter, headers } = req;
