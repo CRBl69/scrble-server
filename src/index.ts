@@ -43,6 +43,7 @@ async function handleWs(socket: WebSocket) {
                 for(let player of room[1].players) {
                     if(socket == player.socket && !room[1].started) {
                         room[1].players = room[1].players.filter(p => p != player);
+                        room[1].broadcast();
                         if(room[1].players.length == 0) rooms.delete(room[0]);
                     }
                 }
