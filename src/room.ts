@@ -308,6 +308,7 @@ export class Room {
                 break;
             case 'start':
                 this.start();
+                this.broadcast();
                 break;
             case 'caseClicked':
                 if (this.currentPlayer?.socket == socket) this.caseClicked(msg.data);
@@ -336,12 +337,6 @@ export class Room {
                 if(this.letters.length > 0) {
                     player.letters.push(this.getLetter());
                 }
-            }
-            if(!player.socket.isClosed) {
-                player.socket.send(JSON.stringify({
-                    type: 'start',
-                    data: player.letters
-                }))
             }
         })
     }
