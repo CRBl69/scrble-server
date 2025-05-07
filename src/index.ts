@@ -7,8 +7,8 @@ const env = config();
 
 let rooms: Map<string, Room> = new Map();
 
-for await (const req of serve({port:parseInt(env.PORT)})){
-    const h = new Headers({'Access-Control-Allow-Origin': env.APP_URL});
+for await (const req of serve({port:parseInt(env.PORT ?? "6942")})){
+    const h = new Headers({'Access-Control-Allow-Origin': "*"});
     switch(req.url) {
         case '/ws':
             const { conn, r: bufReader, w: bufWriter, headers } = req;
